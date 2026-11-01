@@ -1,3 +1,5 @@
+@file:OptIn(UnstableApi::class)
+
 package com.example.mypodcasts.player
 
 import android.content.Context
@@ -6,6 +8,7 @@ import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import com.example.mypodcasts.data.model.SourceType
@@ -41,62 +44,67 @@ class AudioPlayerManager(private val context: Context) {
     }
 
     private fun initExoPlayer() {
-        exoPlayer = ExoPlayer.Builder(context).build().apply {
-            addListener(object : Player.Listener {
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    _playerState.value = _playerState.value.copy(
-                        isPlaying = isPlaying,
-                        durationMs = duration.coerceAtLeast(0L),
-                        positionMs = currentPosition.coerceAtLeast(0L)
-                    )
-
-                    val track = _playerState.value.currentTrack
-                    if (track != null) {
-                        BackgroundAudioService.updateNotification(
-                            context = context,
-                            title = track.title,
-                            artist = track.artistOrChannel,
-                            isPlaying = isPlaying
-                        )
-                    }
-
-                    if (isPlaying) {
-                        startPositionUpdates()
-                    } else {
-                        stopPositionUpdates()
-                    }
-                }
-
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == Player.STATE_READY) {
+        exoPlayer = ExoPlayer.Builder(context)
+            .setSeekBackIncrementMs(15000L)
+            .setSeekForwardIncrementMs(15000L)
+            .build().apply {
+                addListener(object : Player.Listener {
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _playerState.value = _playerState.value.copy(
+                            isPlaying = isPlaying,
                             durationMs = duration.coerceAtLeast(0L),
-                            positionMs = currentPosition.coerceAtLeast(0L),
-                            error = null
+                            positionMs = currentPosition.coerceAtLeast(0L)
                         )
-                    } else if (playbackState == Player.STATE_ENDED) {
+
+                        val track = _playerState.value.currentTrack
+                        if (track != null) {
+                            BackgroundAudioService.updateNotification(
+                                context = context,
+                                title = track.title,
+                                artist = track.artistOrChannel,
+                                isPlaying = isPlaying
+                            )
+                        }
+
+                        if (isPlaying) {
+                            startPositionUpdates()
+                        } else {
+                            stopPositionUpdates()
+                        }
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_READY) {
+                            _playerState.value = _playerState.value.copy(
+                                durationMs = duration.coerceAtLeast(0L),
+                                positionMs = currentPosition.coerceAtLeast(0L),
+                                error = null
+                            )
+                        } else if (playbackState == Player.STATE_ENDED) {
+                            _playerState.value = _playerState.value.copy(
+                                isPlaying = false
+                            )
+                            stopPositionUpdates()
+                            BackgroundAudioService.stopService(context)
+                        }
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
                         _playerState.value = _playerState.value.copy(
-                            isPlaying = false
+                            isPlaying = false,
+                            error = error.localizedMessage ?: "Playback error"
                         )
                         stopPositionUpdates()
                         BackgroundAudioService.stopService(context)
                     }
-                }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    _playerState.value = _playerState.value.copy(
-                        isPlaying = false,
-                        error = error.localizedMessage ?: "Playback error"
-                    )
-                    stopPositionUpdates()
-                    BackgroundAudioService.stopService(context)
-                }
-            })
-        }
+                })
+            }
 
         exoPlayer?.let { player ->
             try {
-                mediaSession = MediaSession.Builder(context, player).build()
+                mediaSession = MediaSession.Builder(context, player)
+                    .setId("MyPodcastsMediaSession")
+                    .build()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
