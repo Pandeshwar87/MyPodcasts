@@ -9,6 +9,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.mypodcasts.data.model.SourceType
 import com.example.mypodcasts.data.model.Track
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,8 @@ data class PlayerState(
 class AudioPlayerManager(private val context: Context) {
 
     private var exoPlayer: ExoPlayer? = null
+    private var positionUpdateJob: Job? = null
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private val _playerState = MutableStateFlow(PlayerState())
     val playerState: StateFlow<PlayerState> = _playerState.asStateFlow()
@@ -38,20 +41,28 @@ class AudioPlayerManager(private val context: Context) {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     _playerState.value = _playerState.value.copy(
                         isPlaying = isPlaying,
-                        durationMs = duration.coerceAtLeast(0L)
+                        durationMs = duration.coerceAtLeast(0L),
+                        positionMs = currentPosition.coerceAtLeast(0L)
                     )
+                    if (isPlaying) {
+                        startPositionUpdates()
+                    } else {
+                        stopPositionUpdates()
+                    }
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_READY) {
                         _playerState.value = _playerState.value.copy(
                             durationMs = duration.coerceAtLeast(0L),
+                            positionMs = currentPosition.coerceAtLeast(0L),
                             error = null
                         )
                     } else if (playbackState == Player.STATE_ENDED) {
                         _playerState.value = _playerState.value.copy(
                             isPlaying = false
                         )
+                        stopPositionUpdates()
                         BackgroundAudioService.stopService(context)
                     }
                 }
@@ -61,10 +72,33 @@ class AudioPlayerManager(private val context: Context) {
                         isPlaying = false,
                         error = error.localizedMessage ?: "Playback error"
                     )
+                    stopPositionUpdates()
                     BackgroundAudioService.stopService(context)
                 }
             })
         }
+    }
+
+    private fun startPositionUpdates() {
+        stopPositionUpdates()
+        positionUpdateJob = coroutineScope.launch {
+            while (isActive) {
+                exoPlayer?.let { player ->
+                    if (player.isPlaying) {
+                        _playerState.value = _playerState.value.copy(
+                            positionMs = player.currentPosition.coerceAtLeast(0L),
+                            durationMs = player.duration.coerceAtLeast(0L)
+                        )
+                    }
+                }
+                delay(500)
+            }
+        }
+    }
+
+    private fun stopPositionUpdates() {
+        positionUpdateJob?.cancel()
+        positionUpdateJob = null
     }
 
     fun playTrack(track: Track) {
@@ -105,14 +139,36 @@ class AudioPlayerManager(private val context: Context) {
         }
     }
 
-    fun stop() {
-        exoPlayer?.stop()
-        _playerState.value = PlayerState()
-        BackgroundAudioService.stopService(context)
+    fun rewind15Sec() {
+        exoPlayer?.let { player ->
+            val newPos = (player.currentPosition - 15000L).coerceAtLeast(0L)
+            player.seekTo(newPos)
+            _playerState.value = _playerState.value.copy(positionMs = newPos)
+        }
+    }
+
+    fun forward15Sec() {
+        exoPlayer?.let { player ->
+            val maxDuration = player.duration.coerceAtLeast(0L)
+            val newPos = (player.currentPosition + 15000L).coerceAtMost(maxDuration)
+            player.seekTo(newPos)
+            _playerState.value = _playerState.value.copy(positionMs = newPos)
+        }
     }
 
     fun seekTo(positionMs: Long) {
-        exoPlayer?.seekTo(positionMs)
+        exoPlayer?.let { player ->
+            val targetPos = positionMs.coerceIn(0L, player.duration.coerceAtLeast(0L))
+            player.seekTo(targetPos)
+            _playerState.value = _playerState.value.copy(positionMs = targetPos)
+        }
+    }
+
+    fun stop() {
+        stopPositionUpdates()
+        exoPlayer?.stop()
+        _playerState.value = PlayerState()
+        BackgroundAudioService.stopService(context)
     }
 
     private fun launchExternalMedia(url: String) {
@@ -128,6 +184,7 @@ class AudioPlayerManager(private val context: Context) {
 
     fun release() {
         stop()
+        coroutineScope.cancel()
         exoPlayer?.release()
         exoPlayer = null
     }

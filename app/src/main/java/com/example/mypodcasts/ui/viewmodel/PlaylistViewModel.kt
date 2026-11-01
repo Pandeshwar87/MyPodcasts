@@ -186,6 +186,18 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
         playerManager.togglePlayPause()
     }
 
+    fun rewind15Sec() {
+        playerManager.rewind15Sec()
+    }
+
+    fun forward15Sec() {
+        playerManager.forward15Sec()
+    }
+
+    fun seekTo(positionMs: Long) {
+        playerManager.seekTo(positionMs)
+    }
+
     override fun onCleared() {
         super.onCleared()
         playerManager.release()

@@ -124,6 +124,9 @@ class MainActivity : ComponentActivity() {
                         MiniPlayerBar(
                             playerState = playerState,
                             onTogglePlayPause = { viewModel.togglePlayPause() },
+                            onRewind15 = { viewModel.rewind15Sec() },
+                            onForward15 = { viewModel.forward15Sec() },
+                            onSeekTo = { pos -> viewModel.seekTo(pos) },
                             onClose = { viewModel.playerManager.stop() },
                             modifier = Modifier.align(Alignment.BottomCenter)
                         )
