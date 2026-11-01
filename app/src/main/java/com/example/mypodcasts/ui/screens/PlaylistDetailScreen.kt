@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.mypodcasts.data.model.SourceType
 import com.example.mypodcasts.data.model.Track
 import com.example.mypodcasts.ui.components.AddTrackDialog
 import com.example.mypodcasts.ui.components.EditPlaylistDialog
@@ -32,6 +33,7 @@ fun PlaylistDetailScreen(
     playlistId: Long,
     viewModel: PlaylistViewModel,
     onBackClick: () -> Unit,
+    onOpenWebView: (url: String, title: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val playlistsWithTracks by viewModel.playlistsWithTracks.collectAsState()
@@ -204,7 +206,13 @@ fun PlaylistDetailScreen(
                     ) { index, track ->
                         TrackItemCard(
                             track = track,
-                            onPlayClick = { viewModel.playTrack(track) },
+                            onPlayClick = {
+                                if (track.sourceType == SourceType.LOCAL_FILE || track.sourceType == SourceType.DIRECT_AUDIO) {
+                                    viewModel.playTrack(track)
+                                } else {
+                                    onOpenWebView(track.mediaUrl, track.title)
+                                }
+                            },
                             onDeleteClick = { viewModel.deleteTrack(track) },
                             onMoveUp = {
                                 if (index > 0) {

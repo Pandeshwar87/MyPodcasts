@@ -20,8 +20,12 @@ import androidx.navigation.navArgument
 import com.example.mypodcasts.ui.components.MiniPlayerBar
 import com.example.mypodcasts.ui.screens.PlaylistDetailScreen
 import com.example.mypodcasts.ui.screens.PlaylistListScreen
+import com.example.mypodcasts.ui.screens.WebViewScreen
 import com.example.mypodcasts.ui.theme.MyPodcastsTheme
 import com.example.mypodcasts.ui.viewmodel.PlaylistViewModel
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class MainActivity : ComponentActivity() {
 
@@ -66,12 +70,56 @@ class MainActivity : ComponentActivity() {
                             PlaylistDetailScreen(
                                 playlistId = playlistId,
                                 viewModel = viewModel,
+                                onBackClick = { navController.popBackStack() },
+                                onOpenWebView = { url, title ->
+                                    val encodedUrl = try {
+                                        URLEncoder.encode(url, StandardCharsets.UTF_8.name())
+                                    } catch (_: Exception) {
+                                        url
+                                    }
+                                    val encodedTitle = try {
+                                        URLEncoder.encode(title, StandardCharsets.UTF_8.name())
+                                    } catch (_: Exception) {
+                                        title
+                                    }
+                                    navController.navigate("webview?url=$encodedUrl&title=$encodedTitle")
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = "webview?url={url}&title={title}",
+                            arguments = listOf(
+                                navArgument("url") { type = NavType.StringType },
+                                navArgument("title") {
+                                    type = NavType.StringType
+                                    defaultValue = "Video Player"
+                                }
+                            )
+                        ) { backStackEntry ->
+                            val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
+                            val title = backStackEntry.arguments?.getString("title") ?: "Video Player"
+
+                            val decodedUrl = try {
+                                URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.name())
+                            } catch (_: Exception) {
+                                encodedUrl
+                            }
+                            val decodedTitle = try {
+                                URLDecoder.decode(title, StandardCharsets.UTF_8.name())
+                            } catch (_: Exception) {
+                                title
+                            }
+
+                            WebViewScreen(
+                                initialUrl = decodedUrl,
+                                title = decodedTitle,
                                 onBackClick = { navController.popBackStack() }
                             )
                         }
                     }
 
-                    // Mini Player Sticky Overlay at the bottom
+                    // Mini Player Sticky Overlay at the bottom for local audio
                     if (playerState.currentTrack != null) {
                         MiniPlayerBar(
                             playerState = playerState,
