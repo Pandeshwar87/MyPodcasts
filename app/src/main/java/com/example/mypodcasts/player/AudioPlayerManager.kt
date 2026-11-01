@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.mypodcasts.data.model.SourceType
@@ -51,14 +52,16 @@ class AudioPlayerManager(private val context: Context) {
                         _playerState.value = _playerState.value.copy(
                             isPlaying = false
                         )
+                        BackgroundAudioService.stopService(context)
                     }
                 }
 
-                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                override fun onPlayerError(error: PlaybackException) {
                     _playerState.value = _playerState.value.copy(
                         isPlaying = false,
                         error = error.localizedMessage ?: "Playback error"
                     )
+                    BackgroundAudioService.stopService(context)
                 }
             })
         }
@@ -78,6 +81,7 @@ class AudioPlayerManager(private val context: Context) {
                         currentTrack = track,
                         isPlaying = true
                     )
+                    BackgroundAudioService.startService(context, track.title)
                 }
             }
             SourceType.YOUTUBE, SourceType.SPOTIFY, SourceType.OTHER -> {
@@ -104,6 +108,7 @@ class AudioPlayerManager(private val context: Context) {
     fun stop() {
         exoPlayer?.stop()
         _playerState.value = PlayerState()
+        BackgroundAudioService.stopService(context)
     }
 
     fun seekTo(positionMs: Long) {
@@ -122,6 +127,7 @@ class AudioPlayerManager(private val context: Context) {
     }
 
     fun release() {
+        stop()
         exoPlayer?.release()
         exoPlayer = null
     }

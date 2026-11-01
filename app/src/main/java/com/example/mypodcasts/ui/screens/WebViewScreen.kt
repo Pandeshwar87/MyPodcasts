@@ -1,8 +1,10 @@
 package com.example.mypodcasts.ui.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -26,6 +28,18 @@ import com.example.mypodcasts.ui.theme.DarkBackground
 import com.example.mypodcasts.ui.theme.PrimaryViolet
 import com.example.mypodcasts.ui.theme.TextPrimary
 import com.example.mypodcasts.ui.theme.TextSecondary
+
+/**
+ * Custom WebView that overrides window visibility changes to prevent
+ * the Chromium media engine from automatically pausing HTML5 video/audio
+ * when the app is minimized or put in the background.
+ */
+class BackgroundPlayableWebView(context: Context) : WebView(context) {
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        // Keep Chromium engine believing the view is VISIBLE so background audio continues
+        super.onWindowVisibilityChanged(VISIBLE)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("SetJavaScriptEnabled")
@@ -116,7 +130,7 @@ fun WebViewScreen(
         ) {
             AndroidView(
                 factory = { ctx ->
-                    WebView(ctx).apply {
+                    BackgroundPlayableWebView(ctx).apply {
                         layoutParams = ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
