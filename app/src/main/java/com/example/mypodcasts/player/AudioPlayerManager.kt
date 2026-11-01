@@ -140,6 +140,15 @@ class AudioPlayerManager(private val context: Context) {
         when (track.sourceType) {
             SourceType.LOCAL_FILE, SourceType.DIRECT_AUDIO, SourceType.DIRECT_VIDEO -> {
                 exoPlayer?.let { player ->
+                    if (uri.scheme == "content") {
+                        try {
+                            context.contentResolver.takePersistableUriPermission(
+                                uri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            )
+                        } catch (_: Exception) {}
+                    }
+
                     val mediaMetadata = MediaMetadata.Builder()
                         .setTitle(track.title)
                         .setArtist(track.artistOrChannel ?: "MyPodcasts")

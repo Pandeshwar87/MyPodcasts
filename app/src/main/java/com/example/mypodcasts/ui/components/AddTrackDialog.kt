@@ -1,5 +1,6 @@
 package com.example.mypodcasts.ui.components
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -41,6 +43,7 @@ fun AddTrackDialog(
         thumbnailUrl: String?
     ) -> Unit
 ) {
+    val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     var isLocalFileTab by remember { mutableStateOf(false) }
 
@@ -56,9 +59,15 @@ fun AddTrackDialog(
     var selectedAudioUri by remember { mutableStateOf<Uri?>(null) }
 
     val audioFilePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {}
             selectedAudioUri = uri
             val meta = UrlParser.parseUrl(uri.toString())
             parsedMetadata = meta
@@ -177,7 +186,7 @@ fun AddTrackDialog(
                             .height(64.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(PrimaryViolet.copy(alpha = 0.15f))
-                            .clickable { audioFilePickerLauncher.launch("audio/*") },
+                            .clickable { audioFilePickerLauncher.launch(arrayOf("audio/*")) },
                         contentAlignment = Alignment.Center
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
