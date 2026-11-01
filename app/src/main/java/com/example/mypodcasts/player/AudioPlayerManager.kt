@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
@@ -111,6 +112,31 @@ class AudioPlayerManager(private val context: Context) {
 
         exoPlayer?.let { player ->
             try {
+                // Wrap ExoPlayer in ForwardingPlayer to explicitly disable Previous/Next track commands
+                val forwardingPlayer = object : ForwardingPlayer(player) {
+                    @UnstableApi
+                    override fun isCommandAvailable(command: Int): Boolean {
+                        if (command == COMMAND_SEEK_TO_PREVIOUS ||
+                            command == COMMAND_SEEK_TO_NEXT ||
+                            command == COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM ||
+                            command == COMMAND_SEEK_TO_NEXT_MEDIA_ITEM
+                        ) {
+                            return false
+                        }
+                        return super.isCommandAvailable(command)
+                    }
+
+                    @UnstableApi
+                    override fun getAvailableCommands(): Player.Commands {
+                        return super.getAvailableCommands().buildUpon()
+                            .remove(COMMAND_SEEK_TO_PREVIOUS)
+                            .remove(COMMAND_SEEK_TO_NEXT)
+                            .remove(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                            .remove(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                            .build()
+                    }
+                }
+
                 val rewind15Command = SessionCommand("ACTION_REWIND_15", Bundle.EMPTY)
                 val rewind15Button = CommandButton.Builder()
                     .setDisplayName("Rewind 15s")
@@ -127,7 +153,7 @@ class AudioPlayerManager(private val context: Context) {
 
                 val customLayout = ImmutableList.of(rewind15Button, forward15Button)
 
-                mediaSession = MediaSession.Builder(context, player)
+                mediaSession = MediaSession.Builder(context, forwardingPlayer)
                     .setId("MyPodcastsMediaSession")
                     .setCustomLayout(customLayout)
                     .setCallback(object : MediaSession.Callback {

@@ -13,15 +13,15 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat as MediaNotificationCompat
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.MediaStyleNotificationHelper
 import com.example.mypodcasts.R
 import com.example.mypodcasts.ui.main.MainActivity
 
 class BackgroundAudioService : Service() {
 
     companion object {
-        const val CHANNEL_ID = "mypodcasts_media_controls_v3"
+        const val CHANNEL_ID = "mypodcasts_media_controls_silent_v7"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START = "ACTION_START_BG_AUDIO"
@@ -142,27 +142,32 @@ class BackgroundAudioService : Service() {
         val playPauseIcon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
         val playPauseTitle = if (isPlaying) "Pause" else "Play"
 
+        val mediaStyle = MediaNotificationCompat.MediaStyle()
+            .setShowActionsInCompactView(0, 1, 2)
+
+        val mediaSession = playerManagerRef?.mediaSession
+        if (mediaSession != null) {
+            try {
+                mediaStyle.setMediaSession(mediaSession.sessionCompatToken)
+            } catch (_: Exception) {}
+        }
+
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(artist ?: "MyPodcasts Media Player")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(mainPendingIntent)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSound(null)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .addAction(android.R.drawable.ic_media_rew, "-15s", rewindPendingIntent)
             .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
             .addAction(android.R.drawable.ic_media_ff, "+15s", forwardPendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
-
-        val mediaSession = playerManagerRef?.mediaSession
-        if (mediaSession != null) {
-            notificationBuilder.setStyle(
-                MediaStyleNotificationHelper.MediaStyle(mediaSession)
-                    .setShowActionsInCompactView(0, 1, 2)
-            )
-        }
+            .setStyle(mediaStyle)
 
         val notification: Notification = notificationBuilder.build()
 
@@ -181,11 +186,13 @@ class BackgroundAudioService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Media Controls",
-                NotificationManager.IMPORTANCE_HIGH
+                "Media Controls (Silent)",
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Media controls notification for audio and video playback"
-                setShowBadge(true)
+                description = "Silent media controls notification for audio and video playback"
+                setShowBadge(false)
+                setSound(null, null)
+                enableVibration(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             val manager = getSystemService(NotificationManager::class.java)

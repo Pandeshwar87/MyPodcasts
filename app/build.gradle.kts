@@ -66,10 +66,11 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    // Media3 ExoPlayer
+    // Media3 ExoPlayer & Legacy Media for MediaStyle Notifications
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media)
 
     // Coil Image Loading
     implementation(libs.coil.compose)
