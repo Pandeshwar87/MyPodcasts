@@ -1,7 +1,11 @@
 package com.example.mypodcasts.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mypodcasts.data.local.AppDatabase
@@ -13,7 +17,9 @@ import com.example.mypodcasts.data.model.Track
 import com.example.mypodcasts.data.repository.MediaRepository
 import com.example.mypodcasts.player.AudioPlayerManager
 import com.example.mypodcasts.player.PlayerState
+import com.example.mypodcasts.server.LocalWebServer
 import com.example.mypodcasts.util.FileUtil
+import com.example.mypodcasts.util.NetworkUtil
 import com.example.mypodcasts.util.ParsedUrlMetadata
 import com.example.mypodcasts.util.UrlParser
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,6 +35,14 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
 
     val playlistsWithTracks: StateFlow<List<PlayListWithTracks>>
 
+    // Laptop Link (Option 3 Local Web Server) State
+    var isServerRunning by mutableStateOf(false)
+        private set
+    var serverUrl by mutableStateOf<String?>(null)
+        private set
+
+    private var localWebServer: LocalWebServer? = null
+
     init {
         val database = AppDatabase.getDatabase(application)
         repository = MediaRepository(database.playlistDao(), database.trackDao())
@@ -37,6 +51,58 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+    }
+
+    /**
+     * Toggle Laptop Link Local Server ON / OFF.
+     */
+    fun toggleLaptopServer(context: Context) {
+        if (isServerRunning) {
+            stopLaptopServer()
+        } else {
+            startLaptopServer(context)
+        }
+    }
+
+    fun startLaptopServer(context: Context) {
+        if (localWebServer != null) return
+        try {
+            val server = LocalWebServer(
+                port = 8080,
+                getPlaylistsProvider = { playlistsWithTracks.value },
+                onAddTrack = { playlistId, title, artist, mediaUrl ->
+                    val meta = UrlParser.parseUrl(mediaUrl)
+                    val finalTitle = if (title.isNotBlank()) title else (meta.suggestedTitle ?: "Track")
+                    addTrack(
+                        playlistId = playlistId,
+                        title = finalTitle,
+                        artistOrChannel = artist,
+                        mediaUrl = mediaUrl,
+                        sourceType = meta.sourceType,
+                        mediaType = meta.mediaType,
+                        thumbnailUrl = meta.thumbnailUrl
+                    )
+                }
+            )
+            server.start()
+            localWebServer = server
+            isServerRunning = true
+
+            val ip = NetworkUtil.getLocalIpAddress(context)
+            serverUrl = if (ip != null) "http://$ip:8080" else "Please connect phone to Wi-Fi"
+        } catch (e: Exception) {
+            e.printStackTrace()
+            stopLaptopServer()
+        }
+    }
+
+    fun stopLaptopServer() {
+        try {
+            localWebServer?.stop()
+        } catch (_: Exception) {}
+        localWebServer = null
+        isServerRunning = false
+        serverUrl = null
     }
 
     /**
@@ -219,6 +285,7 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
 
     override fun onCleared() {
         super.onCleared()
+        stopLaptopServer()
         playerManager.release()
     }
 }

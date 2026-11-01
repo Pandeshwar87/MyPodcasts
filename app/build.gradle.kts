@@ -78,5 +78,9 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // NanoHTTPD & Gson for Option 3 Local Wi-Fi Web Server
+    implementation("org.nanohttpd:nanohttpd:2.3.1")
+    implementation("com.google.code.gson:gson:2.10.1")
+
     debugImplementation(libs.androidx.ui.tooling)
 }

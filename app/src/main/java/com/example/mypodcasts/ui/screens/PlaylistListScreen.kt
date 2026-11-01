@@ -6,14 +6,17 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Laptop
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.mypodcasts.ui.components.AddPlaylistDialog
+import com.example.mypodcasts.ui.components.LaptopServerDialog
 import com.example.mypodcasts.ui.components.PlayListItemCard
 import com.example.mypodcasts.ui.theme.*
 import com.example.mypodcasts.ui.viewmodel.PlaylistViewModel
@@ -25,9 +28,11 @@ fun PlaylistListScreen(
     onPlaylistClick: (playlistId: Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val playlistsWithTracks by viewModel.playlistsWithTracks.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
+    var showLaptopServerDialog by remember { mutableStateOf(false) }
 
     val filteredPlaylists = remember(playlistsWithTracks, searchQuery) {
         if (searchQuery.isBlank()) {
@@ -55,6 +60,15 @@ fun PlaylistListScreen(
                         Text(
                             text = "My Playlists",
                             style = MaterialTheme.typography.headlineLarge
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showLaptopServerDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Laptop,
+                            contentDescription = "Laptop Link",
+                            tint = if (viewModel.isServerRunning) AccentEmerald else TextPrimary
                         )
                     }
                 },
@@ -176,6 +190,17 @@ fun PlaylistListScreen(
                 viewModel.createPlaylist(title, desc, avatarUri)
                 showAddDialog = false
             }
+        )
+    }
+
+    if (showLaptopServerDialog) {
+        LaptopServerDialog(
+            isServerRunning = viewModel.isServerRunning,
+            serverUrl = viewModel.serverUrl,
+            onToggleServer = {
+                viewModel.toggleLaptopServer(context)
+            },
+            onDismiss = { showLaptopServerDialog = false }
         )
     }
 }
