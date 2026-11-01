@@ -52,18 +52,18 @@ fun TrackItemCard(
                 .padding(horizontal = 10.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Play Button on Far Left
+            // Play Button on Far Left (75% size: 28.dp container, 16.dp icon)
             IconButton(
                 onClick = onPlayClick,
                 modifier = Modifier
-                    .size(38.dp)
+                    .size(28.dp)
                     .background(PrimaryViolet.copy(alpha = 0.2f), CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = "Play Track",
                     tint = PrimaryViolet,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
