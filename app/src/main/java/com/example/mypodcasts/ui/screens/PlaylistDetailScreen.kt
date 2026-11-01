@@ -1,6 +1,7 @@
 package com.example.mypodcasts.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -8,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.mypodcasts.data.model.Track
 import com.example.mypodcasts.ui.components.AddTrackDialog
+import com.example.mypodcasts.ui.components.EditPlaylistDialog
 import com.example.mypodcasts.ui.components.TrackItemCard
 import com.example.mypodcasts.ui.theme.*
 import com.example.mypodcasts.ui.viewmodel.PlaylistViewModel
@@ -37,6 +40,7 @@ fun PlaylistDetailScreen(
     }
 
     var showAddTrackDialog by remember { mutableStateOf(false) }
+    var showEditPlaylistDialog by remember { mutableStateOf(false) }
 
     if (currentItem == null) {
         Box(
@@ -60,6 +64,11 @@ fun PlaylistDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showEditPlaylistDialog = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Playlist", tint = TextPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
@@ -87,7 +96,8 @@ fun PlaylistDetailScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 8.dp)
+                    .clickable { showEditPlaylistDialog = true },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = DarkSurface)
             ) {
@@ -123,7 +133,7 @@ fun PlaylistDetailScreen(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = playlist.title,
                             style = MaterialTheme.typography.headlineMedium
@@ -139,6 +149,14 @@ fun PlaylistDetailScreen(
                             text = "${tracks.size} track${if (tracks.size != 1) "s" else ""}",
                             style = MaterialTheme.typography.labelMedium,
                             color = SecondaryViolet
+                        )
+                    }
+
+                    IconButton(onClick = { showEditPlaylistDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Playlist",
+                            tint = TextSecondary
                         )
                     }
                 }
@@ -232,6 +250,18 @@ fun PlaylistDetailScreen(
             }
         )
     }
+
+    if (showEditPlaylistDialog) {
+        EditPlaylistDialog(
+            playlist = playlist,
+            onDismiss = { showEditPlaylistDialog = false },
+            onConfirm = { newTitle, newDesc, newAvatarUri ->
+                viewModel.updatePlaylist(playlist, newTitle, newDesc, newAvatarUri)
+                showEditPlaylistDialog = false
+            }
+        )
+    }
 }
 
 private fun String?.isNull_or_blank(): Boolean = this == null || this.isBlank()
+

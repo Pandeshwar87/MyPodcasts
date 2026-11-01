@@ -3,12 +3,11 @@ package com.example.mypodcasts.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +23,7 @@ import com.example.mypodcasts.ui.theme.*
 fun PlayListItemCard(
     playlistWithTracks: PlayListWithTracks,
     onClick: () -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -92,6 +92,15 @@ fun PlayListItemCard(
                 )
             }
 
+            // Edit Action
+            IconButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Playlist",
+                    tint = TextSecondary
+                )
+            }
+
             // Delete Action
             IconButton(onClick = onDeleteClick) {
                 Icon(
@@ -105,3 +114,4 @@ fun PlayListItemCard(
 }
 
 private fun String?.isNull_or_blank(): Boolean = this == null || this.isBlank()
+
