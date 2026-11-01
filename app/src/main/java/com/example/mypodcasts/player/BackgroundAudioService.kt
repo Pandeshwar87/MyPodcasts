@@ -21,20 +21,40 @@ class BackgroundAudioService : Service() {
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START = "ACTION_START_BG_AUDIO"
+        const val ACTION_UPDATE = "ACTION_UPDATE_BG_AUDIO"
+        const val ACTION_PLAY_PAUSE = "ACTION_PLAY_PAUSE"
+        const val ACTION_REWIND_15 = "ACTION_REWIND_15"
+        const val ACTION_FORWARD_15 = "ACTION_FORWARD_15"
         const val ACTION_STOP = "ACTION_STOP_BG_AUDIO"
 
         const val EXTRA_TRACK_TITLE = "EXTRA_TRACK_TITLE"
+        const val EXTRA_ARTIST = "EXTRA_ARTIST"
+        const val EXTRA_IS_PLAYING = "EXTRA_IS_PLAYING"
 
-        fun startService(context: Context, title: String) {
+        var playerManagerRef: AudioPlayerManager? = null
+
+        fun startService(context: Context, title: String, artist: String? = null, isPlaying: Boolean = true) {
             val intent = Intent(context, BackgroundAudioService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_TRACK_TITLE, title)
+                putExtra(EXTRA_ARTIST, artist)
+                putExtra(EXTRA_IS_PLAYING, isPlaying)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {
                 context.startService(intent)
             }
+        }
+
+        fun updateNotification(context: Context, title: String, artist: String? = null, isPlaying: Boolean) {
+            val intent = Intent(context, BackgroundAudioService::class.java).apply {
+                action = ACTION_UPDATE
+                putExtra(EXTRA_TRACK_TITLE, title)
+                putExtra(EXTRA_ARTIST, artist)
+                putExtra(EXTRA_IS_PLAYING, isPlaying)
+            }
+            context.startService(intent)
         }
 
         fun stopService(context: Context) {
@@ -48,12 +68,26 @@ class BackgroundAudioService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_START -> {
-                val title = intent.getStringExtra(EXTRA_TRACK_TITLE) ?: "Playing Audio/Video"
-                startForegroundNotification(title)
+        val action = intent?.action
+
+        when (action) {
+            ACTION_START, ACTION_UPDATE -> {
+                val title = intent.getStringExtra(EXTRA_TRACK_TITLE) ?: "MyPodcasts"
+                val artist = intent.getStringExtra(EXTRA_ARTIST)
+                val isPlaying = intent.getBooleanExtra(EXTRA_IS_PLAYING, true)
+                buildAndShowNotification(title, artist, isPlaying)
+            }
+            ACTION_PLAY_PAUSE -> {
+                playerManagerRef?.togglePlayPause()
+            }
+            ACTION_REWIND_15 -> {
+                playerManagerRef?.rewind15Sec()
+            }
+            ACTION_FORWARD_15 -> {
+                playerManagerRef?.forward15Sec()
             }
             ACTION_STOP -> {
+                playerManagerRef?.stop()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -61,36 +95,63 @@ class BackgroundAudioService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun startForegroundNotification(title: String) {
+    private fun buildAndShowNotification(title: String, artist: String?, isPlaying: Boolean) {
         createNotificationChannel()
 
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
+        val mainIntent = Intent(this, MainActivity::class.java)
+        val mainPendingIntent = PendingIntent.getActivity(
             this,
             0,
-            notificationIntent,
+            mainIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val stopIntent = Intent(this, BackgroundAudioService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPendingIntent = PendingIntent.getService(
+        // Media Control PendingIntents
+        val rewindPendingIntent = PendingIntent.getService(
             this,
             1,
-            stopIntent,
+            Intent(this, BackgroundAudioService::class.java).apply { action = ACTION_REWIND_15 },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("MyPodcasts - Background Playback")
-            .setContentText(title)
+        val playPausePendingIntent = PendingIntent.getService(
+            this,
+            2,
+            Intent(this, BackgroundAudioService::class.java).apply { action = ACTION_PLAY_PAUSE },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val forwardPendingIntent = PendingIntent.getService(
+            this,
+            3,
+            Intent(this, BackgroundAudioService::class.java).apply { action = ACTION_FORWARD_15 },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            4,
+            Intent(this, BackgroundAudioService::class.java).apply { action = ACTION_STOP },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val playPauseIcon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+        val playPauseTitle = if (isPlaying) "Pause" else "Play"
+
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(title)
+            .setContentText(artist ?: "MyPodcasts Audio Player")
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(mainPendingIntent)
             .setOngoing(true)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+            .addAction(android.R.drawable.ic_media_rew, "-15s", rewindPendingIntent)
+            .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
+            .addAction(android.R.drawable.ic_media_ff, "+15s", forwardPendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
+
+        val notification: Notification = notificationBuilder.build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
@@ -110,7 +171,7 @@ class BackgroundAudioService : Service() {
                 "Background Media Playback",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Keeps audio playing in background when screen is off"
+                description = "Media controls notification for audio playback"
             }
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)

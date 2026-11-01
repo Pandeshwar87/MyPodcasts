@@ -7,6 +7,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaSession
 import com.example.mypodcasts.data.model.SourceType
 import com.example.mypodcasts.data.model.Track
 import kotlinx.coroutines.*
@@ -25,6 +26,7 @@ data class PlayerState(
 class AudioPlayerManager(private val context: Context) {
 
     private var exoPlayer: ExoPlayer? = null
+    private var mediaSession: MediaSession? = null
     private var positionUpdateJob: Job? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -33,6 +35,7 @@ class AudioPlayerManager(private val context: Context) {
 
     init {
         initExoPlayer()
+        BackgroundAudioService.playerManagerRef = this
     }
 
     private fun initExoPlayer() {
@@ -44,6 +47,17 @@ class AudioPlayerManager(private val context: Context) {
                         durationMs = duration.coerceAtLeast(0L),
                         positionMs = currentPosition.coerceAtLeast(0L)
                     )
+
+                    val track = _playerState.value.currentTrack
+                    if (track != null) {
+                        BackgroundAudioService.updateNotification(
+                            context = context,
+                            title = track.title,
+                            artist = track.artistOrChannel,
+                            isPlaying = isPlaying
+                        )
+                    }
+
                     if (isPlaying) {
                         startPositionUpdates()
                     } else {
@@ -76,6 +90,14 @@ class AudioPlayerManager(private val context: Context) {
                     BackgroundAudioService.stopService(context)
                 }
             })
+        }
+
+        exoPlayer?.let { player ->
+            try {
+                mediaSession = MediaSession.Builder(context, player).build()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -115,11 +137,15 @@ class AudioPlayerManager(private val context: Context) {
                         currentTrack = track,
                         isPlaying = true
                     )
-                    BackgroundAudioService.startService(context, track.title)
+                    BackgroundAudioService.startService(
+                        context = context,
+                        title = track.title,
+                        artist = track.artistOrChannel,
+                        isPlaying = true
+                    )
                 }
             }
             SourceType.YOUTUBE, SourceType.SPOTIFY, SourceType.OTHER -> {
-                // Launch native external app or web browser for YouTube/Spotify links
                 launchExternalMedia(track.mediaUrl)
                 _playerState.value = PlayerState(
                     currentTrack = track,
@@ -185,6 +211,8 @@ class AudioPlayerManager(private val context: Context) {
     fun release() {
         stop()
         coroutineScope.cancel()
+        mediaSession?.release()
+        mediaSession = null
         exoPlayer?.release()
         exoPlayer = null
     }
