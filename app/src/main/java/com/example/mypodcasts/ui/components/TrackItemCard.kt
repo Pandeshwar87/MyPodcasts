@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.MusicNote
@@ -25,7 +24,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.mypodcasts.data.model.MediaType
 import com.example.mypodcasts.data.model.SourceType
 import com.example.mypodcasts.data.model.Track
 import com.example.mypodcasts.ui.theme.*
@@ -51,18 +49,25 @@ fun TrackItemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = 10.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Drag Handle Icon
-            Icon(
-                imageVector = Icons.Default.DragHandle,
-                contentDescription = "Drag to reorder",
-                tint = TextSecondary.copy(alpha = 0.6f),
+            // Play Button on Far Left
+            IconButton(
+                onClick = onPlayClick,
                 modifier = Modifier
-                    .padding(end = 6.dp)
-                    .size(22.dp)
-            )
+                    .size(38.dp)
+                    .background(PrimaryViolet.copy(alpha = 0.2f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play Track",
+                    tint = PrimaryViolet,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
 
             // Track Thumbnail or Source Icon
             Box(
@@ -72,7 +77,7 @@ fun TrackItemCard(
                     .background(DarkSurfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                if (!track.thumbnailUrl.isNull_or_blank()) {
+                if (!track.thumbnailUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = track.thumbnailUrl,
                         contentDescription = track.title,
@@ -101,15 +106,16 @@ fun TrackItemCard(
                 }
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            // Title & Details
+            // Title & Details in Middle
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = track.title,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -117,73 +123,61 @@ fun TrackItemCard(
                     // Source Tag Badge
                     SourceBadge(sourceType = track.sourceType)
 
-                    if (!track.artistOrChannel.isNull_or_blank()) {
+                    if (!track.artistOrChannel.isNullOrBlank()) {
                         Text(
                             text = "• ${track.artistOrChannel}",
                             style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
                             maxLines = 1
                         )
                     }
                 }
             }
 
-            // Quick Reorder Up / Down Buttons
-            if (onMoveUp != null && canMoveUp) {
+            // Right Action Controls: Reorder Arrows & Delete Button
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (onMoveUp != null && canMoveUp) {
+                    IconButton(
+                        onClick = onMoveUp,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowUpward,
+                            contentDescription = "Move Up",
+                            tint = SecondaryViolet,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                if (onMoveDown != null && canMoveDown) {
+                    IconButton(
+                        onClick = onMoveDown,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDownward,
+                            contentDescription = "Move Down",
+                            tint = SecondaryViolet,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
                 IconButton(
-                    onClick = onMoveUp,
-                    modifier = Modifier.size(32.dp)
+                    onClick = onDeleteClick,
+                    modifier = Modifier.size(34.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowUpward,
-                        contentDescription = "Move Up",
-                        tint = SecondaryViolet,
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Track",
+                        tint = TextSecondary.copy(alpha = 0.7f),
                         modifier = Modifier.size(18.dp)
                     )
                 }
-            }
-
-            if (onMoveDown != null && canMoveDown) {
-                IconButton(
-                    onClick = onMoveDown,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDownward,
-                        contentDescription = "Move Down",
-                        tint = SecondaryViolet,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-
-            // Play Button
-            IconButton(
-                onClick = onPlayClick,
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(PrimaryViolet.copy(alpha = 0.2f), CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play Track",
-                    tint = PrimaryViolet,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(2.dp))
-
-            // Delete Track Button
-            IconButton(
-                onClick = onDeleteClick,
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete Track",
-                    tint = TextSecondary.copy(alpha = 0.7f),
-                    modifier = Modifier.size(18.dp)
-                )
             }
         }
     }
@@ -213,5 +207,3 @@ fun SourceBadge(sourceType: SourceType) {
         )
     }
 }
-
-private fun String?.isNull_or_blank(): Boolean = this == null || this.isBlank()
