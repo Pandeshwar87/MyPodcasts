@@ -13,9 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.mypodcasts.data.model.PlayList
 import com.example.mypodcasts.ui.components.AddPlaylistDialog
-import com.example.mypodcasts.ui.components.EditPlaylistDialog
 import com.example.mypodcasts.ui.components.PlayListItemCard
 import com.example.mypodcasts.ui.theme.*
 import com.example.mypodcasts.ui.viewmodel.PlaylistViewModel
@@ -30,7 +28,6 @@ fun PlaylistListScreen(
     val playlistsWithTracks by viewModel.playlistsWithTracks.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
-    var editingPlaylist by remember { mutableStateOf<PlayList?>(null) }
 
     val filteredPlaylists = remember(playlistsWithTracks, searchQuery) {
         if (searchQuery.isBlank()) {
@@ -145,8 +142,6 @@ fun PlaylistListScreen(
                         PlayListItemCard(
                             playlistWithTracks = item,
                             onClick = { onPlaylistClick(item.playlist.id) },
-                            onEditClick = { editingPlaylist = item.playlist },
-                            onDeleteClick = { viewModel.deletePlaylist(item.playlist) },
                             onMoveUp = {
                                 if (index > 0) {
                                     val mutableList = playlistsWithTracks.map { it.playlist }.toMutableList()
@@ -180,17 +175,6 @@ fun PlaylistListScreen(
             onConfirm = { title, desc, avatarUri ->
                 viewModel.createPlaylist(title, desc, avatarUri)
                 showAddDialog = false
-            }
-        )
-    }
-
-    editingPlaylist?.let { playlist ->
-        EditPlaylistDialog(
-            playlist = playlist,
-            onDismiss = { editingPlaylist = null },
-            onConfirm = { newTitle, newDesc, newAvatarUri ->
-                viewModel.updatePlaylist(playlist, newTitle, newDesc, newAvatarUri)
-                editingPlaylist = null
             }
         )
     }

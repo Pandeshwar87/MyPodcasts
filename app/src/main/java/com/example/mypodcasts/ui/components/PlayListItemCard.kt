@@ -7,8 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -25,8 +23,6 @@ import com.example.mypodcasts.ui.theme.*
 fun PlayListItemCard(
     playlistWithTracks: PlayListWithTracks,
     onClick: () -> Unit,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
     onMoveUp: (() -> Unit)? = null,
     onMoveDown: (() -> Unit)? = null,
     canMoveUp: Boolean = false,
@@ -125,32 +121,6 @@ fun PlayListItemCard(
                         modifier = Modifier.size(18.dp)
                     )
                 }
-            }
-
-            // Edit Action
-            IconButton(
-                onClick = onEditClick,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit Playlist",
-                    tint = TextSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            // Delete Action
-            IconButton(
-                onClick = onDeleteClick,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete Playlist",
-                    tint = TextSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
             }
         }
     }

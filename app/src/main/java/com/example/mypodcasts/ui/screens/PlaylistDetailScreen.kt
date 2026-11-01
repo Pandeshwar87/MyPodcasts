@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
@@ -43,6 +44,7 @@ fun PlaylistDetailScreen(
 
     var showAddTrackDialog by remember { mutableStateOf(false) }
     var showEditPlaylistDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var editingTrack by remember { mutableStateOf<Track?>(null) }
 
     if (currentItem == null) {
@@ -71,7 +73,10 @@ fun PlaylistDetailScreen(
                 },
                 actions = {
                     IconButton(onClick = { showEditPlaylistDialog = true }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Playlist", tint = TextPrimary)
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Playlist Details", tint = TextPrimary)
+                    }
+                    IconButton(onClick = { showDeleteConfirmDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Playlist", tint = TextPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
@@ -263,6 +268,33 @@ fun PlaylistDetailScreen(
                 viewModel.updatePlaylist(playlist, newTitle, newDesc, newAvatarUri)
                 showEditPlaylistDialog = false
             }
+        )
+    }
+
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text("Delete Playlist") },
+            text = { Text("Are you sure you want to delete '${playlist.title}' and all its tracks?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                        viewModel.deletePlaylist(playlist)
+                        onBackClick()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentPink)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            },
+            containerColor = DarkSurface,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
