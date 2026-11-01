@@ -1,7 +1,6 @@
 package com.example.mypodcasts.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -20,7 +19,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.mypodcasts.data.model.SourceType
-import com.example.mypodcasts.data.model.Track
 import com.example.mypodcasts.ui.components.AddTrackDialog
 import com.example.mypodcasts.ui.components.EditPlaylistDialog
 import com.example.mypodcasts.ui.components.TrackItemCard
@@ -98,8 +96,7 @@ fun PlaylistDetailScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clickable { showEditPlaylistDialog = true },
+                    .padding(vertical = 8.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = DarkSurface)
             ) {
@@ -151,14 +148,6 @@ fun PlaylistDetailScreen(
                             text = "${tracks.size} track${if (tracks.size != 1) "s" else ""}",
                             style = MaterialTheme.typography.labelMedium,
                             color = SecondaryViolet
-                        )
-                    }
-
-                    IconButton(onClick = { showEditPlaylistDialog = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit Playlist",
-                            tint = TextSecondary
                         )
                     }
                 }
@@ -272,4 +261,3 @@ fun PlaylistDetailScreen(
 }
 
 private fun String?.isNull_or_blank(): Boolean = this == null || this.isBlank()
-
