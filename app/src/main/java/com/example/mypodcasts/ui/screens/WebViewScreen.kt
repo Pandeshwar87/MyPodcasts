@@ -9,7 +9,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -22,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.mypodcasts.player.BackgroundAudioService
 import com.example.mypodcasts.ui.theme.DarkBackground
 import com.example.mypodcasts.ui.theme.PrimaryViolet
 import com.example.mypodcasts.ui.theme.TextPrimary
@@ -41,6 +41,15 @@ fun WebViewScreen(
     var isLoading by remember { mutableStateOf(true) }
     var progress by remember { mutableIntStateOf(0) }
     var currentWebTitle by remember { mutableStateOf(title) }
+
+    // Start Foreground Service so Android keeps CPU & Network active for background audio
+    DisposableEffect(initialUrl) {
+        BackgroundAudioService.startService(context, currentWebTitle.ifBlank { title })
+        onDispose {
+            BackgroundAudioService.stopService(context)
+            webViewInstance?.destroy()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -118,7 +127,7 @@ fun WebViewScreen(
                         cookieManager.setAcceptCookie(true)
                         cookieManager.setAcceptThirdPartyCookies(this, true)
 
-                        // Web Settings for Video & Authentication
+                        // Web Settings for Background Audio & Media Playback
                         settings.apply {
                             javaScriptEnabled = true
                             domStorageEnabled = true
@@ -188,5 +197,3 @@ fun WebViewScreen(
         }
     }
 }
-
-private fun String?.isNull_or_blank(): Boolean = this == null || this.isBlank()
