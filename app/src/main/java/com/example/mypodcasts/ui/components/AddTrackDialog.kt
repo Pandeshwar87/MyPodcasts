@@ -62,9 +62,6 @@ fun AddTrackDialog(
             selectedAudioUri = uri
             val meta = UrlParser.parseUrl(uri.toString())
             parsedMetadata = meta
-            if (customTitle.isBlank() && meta.suggestedTitle != null) {
-                customTitle = meta.suggestedTitle
-            }
         }
     }
 
@@ -74,9 +71,6 @@ fun AddTrackDialog(
         if (trimmed.isNotBlank() && !isLocalFileTab) {
             val detected = UrlParser.parseUrl(trimmed)
             parsedMetadata = detected
-            if (customTitle.isBlank() && detected.suggestedTitle != null) {
-                customTitle = detected.suggestedTitle
-            }
         } else if (trimmed.isBlank()) {
             parsedMetadata = null
         }
@@ -128,7 +122,6 @@ fun AddTrackDialog(
                             inputUrl = newValue.replace("\n", "").replace("\r", "")
                         },
                         label = { Text("URL Link (YouTube, Spotify, MP3 stream) *") },
-                        placeholder = { Text("https://youtube.com/watch?v=...") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Uri,
