@@ -49,15 +49,17 @@ fun TrackItemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Play Button on Far Left (75% size: 28.dp container, 16.dp icon)
-            IconButton(
-                onClick = onPlayClick,
+            // Play Button on Far Left (Clean compact 26.dp circle)
+            Box(
                 modifier = Modifier
-                    .size(28.dp)
-                    .background(PrimaryViolet.copy(alpha = 0.2f), CircleShape)
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(PrimaryViolet.copy(alpha = 0.25f))
+                    .clickable { onPlayClick() },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
@@ -67,7 +69,8 @@ fun TrackItemCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            // Increased Right Margin after Play Button
+            Spacer(modifier = Modifier.width(16.dp))
 
             // Track Thumbnail or Source Icon
             Box(
