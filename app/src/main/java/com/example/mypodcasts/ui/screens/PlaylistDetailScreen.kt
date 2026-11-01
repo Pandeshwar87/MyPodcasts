@@ -19,8 +19,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.mypodcasts.data.model.SourceType
+import com.example.mypodcasts.data.model.Track
 import com.example.mypodcasts.ui.components.AddTrackDialog
 import com.example.mypodcasts.ui.components.EditPlaylistDialog
+import com.example.mypodcasts.ui.components.EditTrackDialog
 import com.example.mypodcasts.ui.components.TrackItemCard
 import com.example.mypodcasts.ui.theme.*
 import com.example.mypodcasts.ui.viewmodel.PlaylistViewModel
@@ -41,6 +43,7 @@ fun PlaylistDetailScreen(
 
     var showAddTrackDialog by remember { mutableStateOf(false) }
     var showEditPlaylistDialog by remember { mutableStateOf(false) }
+    var editingTrack by remember { mutableStateOf<Track?>(null) }
 
     if (currentItem == null) {
         Box(
@@ -202,6 +205,7 @@ fun PlaylistDetailScreen(
                                     onOpenWebView(track.mediaUrl, track.title)
                                 }
                             },
+                            onEditClick = { editingTrack = track },
                             onDeleteClick = { viewModel.deleteTrack(track) },
                             onMoveUp = {
                                 if (index > 0) {
@@ -255,6 +259,17 @@ fun PlaylistDetailScreen(
             onConfirm = { newTitle, newDesc, newAvatarUri ->
                 viewModel.updatePlaylist(playlist, newTitle, newDesc, newAvatarUri)
                 showEditPlaylistDialog = false
+            }
+        )
+    }
+
+    editingTrack?.let { track ->
+        EditTrackDialog(
+            track = track,
+            onDismiss = { editingTrack = null },
+            onConfirm = { newTitle, newArtist, newMediaUrl ->
+                viewModel.updateTrack(track, newTitle, newArtist, newMediaUrl)
+                editingTrack = null
             }
         )
     }

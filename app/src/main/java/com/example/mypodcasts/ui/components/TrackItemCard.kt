@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.MoreVert
@@ -34,6 +35,7 @@ fun TrackItemCard(
     track: Track,
     onPlayClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: (() -> Unit)? = null,
     onMoveUp: (() -> Unit)? = null,
     onMoveDown: (() -> Unit)? = null,
     canMoveUp: Boolean = false,
@@ -173,7 +175,7 @@ fun TrackItemCard(
                     }
                 }
 
-                // 3-Dots Overflow Menu with Delete Action Inside
+                // 3-Dots Overflow Menu
                 Box {
                     IconButton(
                         onClick = { showMenu = true },
@@ -192,12 +194,29 @@ fun TrackItemCard(
                         onDismissRequest = { showMenu = false },
                         modifier = Modifier.background(DarkSurfaceVariant)
                     ) {
+                        if (onEditClick != null) {
+                            DropdownMenuItem(
+                                text = { Text("Edit Track Details", color = TextPrimary) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit Track Details",
+                                        tint = SecondaryViolet
+                                    )
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onEditClick()
+                                }
+                            )
+                        }
+
                         DropdownMenuItem(
                             text = { Text("Delete Track", color = TextPrimary) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete",
+                                    contentDescription = "Delete Track",
                                     tint = AccentPink
                                 )
                             },

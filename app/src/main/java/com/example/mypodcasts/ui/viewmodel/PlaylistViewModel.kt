@@ -176,6 +176,25 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
     }
 
     /**
+     * Update an existing Track's details (title, artist, mediaUrl).
+     */
+    fun updateTrack(track: Track, newTitle: String, newArtist: String?, newMediaUrl: String) {
+        viewModelScope.launch {
+            val trimmedUrl = newMediaUrl.trim()
+            val meta = UrlParser.parseUrl(trimmedUrl)
+            val updated = track.copy(
+                title = newTitle.trim().ifBlank { "Untitled Track" },
+                artistOrChannel = newArtist?.trim()?.ifBlank { null },
+                mediaUrl = trimmedUrl,
+                sourceType = meta.sourceType,
+                mediaType = meta.mediaType,
+                thumbnailUrl = meta.thumbnailUrl ?: track.thumbnailUrl
+            )
+            repository.updateTrack(updated)
+        }
+    }
+
+    /**
      * Play a track (local MP3 in ExoPlayer, or open YouTube/Spotify link).
      */
     fun playTrack(track: Track) {
