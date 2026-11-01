@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -139,7 +140,16 @@ class AudioPlayerManager(private val context: Context) {
         when (track.sourceType) {
             SourceType.LOCAL_FILE, SourceType.DIRECT_AUDIO, SourceType.DIRECT_VIDEO -> {
                 exoPlayer?.let { player ->
-                    val mediaItem = MediaItem.fromUri(uri)
+                    val mediaMetadata = MediaMetadata.Builder()
+                        .setTitle(track.title)
+                        .setArtist(track.artistOrChannel ?: "MyPodcasts")
+                        .build()
+
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(uri)
+                        .setMediaMetadata(mediaMetadata)
+                        .build()
+
                     player.setMediaItem(mediaItem)
                     player.prepare()
                     player.play()

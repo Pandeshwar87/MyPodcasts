@@ -21,7 +21,7 @@ import com.example.mypodcasts.ui.main.MainActivity
 class BackgroundAudioService : Service() {
 
     companion object {
-        const val CHANNEL_ID = "mypodcasts_bg_audio_channel"
+        const val CHANNEL_ID = "mypodcasts_media_controls_v3"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START = "ACTION_START_BG_AUDIO"
@@ -149,7 +149,7 @@ class BackgroundAudioService : Service() {
             .setContentIntent(mainPendingIntent)
             .setOngoing(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .addAction(android.R.drawable.ic_media_rew, "-15s", rewindPendingIntent)
             .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
@@ -158,7 +158,10 @@ class BackgroundAudioService : Service() {
 
         val mediaSession = playerManagerRef?.mediaSession
         if (mediaSession != null) {
-            notificationBuilder.setStyle(MediaStyleNotificationHelper.MediaStyle(mediaSession))
+            notificationBuilder.setStyle(
+                MediaStyleNotificationHelper.MediaStyle(mediaSession)
+                    .setShowActionsInCompactView(0, 1, 2)
+            )
         }
 
         val notification: Notification = notificationBuilder.build()
@@ -178,8 +181,8 @@ class BackgroundAudioService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Media Playback Controls",
-                NotificationManager.IMPORTANCE_DEFAULT
+                "Media Controls",
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Media controls notification for audio and video playback"
                 setShowBadge(true)
