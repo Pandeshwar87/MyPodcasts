@@ -199,7 +199,10 @@ fun PlaylistDetailScreen(
                         TrackItemCard(
                             track = track,
                             onPlayClick = {
-                                if (track.sourceType == SourceType.LOCAL_FILE || track.sourceType == SourceType.DIRECT_AUDIO) {
+                                if (track.sourceType == SourceType.LOCAL_FILE ||
+                                    track.sourceType == SourceType.DIRECT_AUDIO ||
+                                    track.sourceType == SourceType.SPOTIFY
+                                ) {
                                     viewModel.playTrack(track)
                                 } else {
                                     onOpenWebView(track.mediaUrl, track.title)
