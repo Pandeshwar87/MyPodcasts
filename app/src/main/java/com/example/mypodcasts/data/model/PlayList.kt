@@ -13,6 +13,7 @@ data class PlayList(
     val title: String,
     val description: String? = null,
     val coverImageUrl: String? = null, // Local URI or remote image URL for avatar/cover
+    val position: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

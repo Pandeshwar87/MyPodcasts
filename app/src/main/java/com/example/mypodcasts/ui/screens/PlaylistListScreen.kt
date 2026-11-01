@@ -2,7 +2,7 @@ package com.example.mypodcasts.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.mypodcasts.data.model.PlayList
-import com.example.mypodcasts.data.model.PlayListWithTracks
 import com.example.mypodcasts.ui.components.AddPlaylistDialog
 import com.example.mypodcasts.ui.components.EditPlaylistDialog
 import com.example.mypodcasts.ui.components.PlayListItemCard
@@ -139,15 +138,35 @@ fun PlaylistListScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 88.dp)
                 ) {
-                    items(
+                    itemsIndexed(
                         items = filteredPlaylists,
-                        key = { it.playlist.id }
-                    ) { item ->
+                        key = { _, item -> item.playlist.id }
+                    ) { index, item ->
                         PlayListItemCard(
                             playlistWithTracks = item,
                             onClick = { onPlaylistClick(item.playlist.id) },
                             onEditClick = { editingPlaylist = item.playlist },
-                            onDeleteClick = { viewModel.deletePlaylist(item.playlist) }
+                            onDeleteClick = { viewModel.deletePlaylist(item.playlist) },
+                            onMoveUp = {
+                                if (index > 0) {
+                                    val mutableList = playlistsWithTracks.map { it.playlist }.toMutableList()
+                                    val temp = mutableList[index]
+                                    mutableList[index] = mutableList[index - 1]
+                                    mutableList[index - 1] = temp
+                                    viewModel.reorderPlaylists(mutableList)
+                                }
+                            },
+                            onMoveDown = {
+                                if (index < filteredPlaylists.size - 1) {
+                                    val mutableList = playlistsWithTracks.map { it.playlist }.toMutableList()
+                                    val temp = mutableList[index]
+                                    mutableList[index] = mutableList[index + 1]
+                                    mutableList[index + 1] = temp
+                                    viewModel.reorderPlaylists(mutableList)
+                                }
+                            },
+                            canMoveUp = index > 0,
+                            canMoveDown = index < filteredPlaylists.size - 1
                         )
                     }
                 }
@@ -176,4 +195,3 @@ fun PlaylistListScreen(
         )
     }
 }
-

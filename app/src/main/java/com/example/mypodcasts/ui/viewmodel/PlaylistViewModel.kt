@@ -143,6 +143,18 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
     }
 
     /**
+     * Reorder playlists by assigning updated position indices and persisting to DB.
+     */
+    fun reorderPlaylists(playlists: List<PlayList>) {
+        viewModelScope.launch {
+            val reordered = playlists.mapIndexed { index, playlist ->
+                playlist.copy(position = index)
+            }
+            repository.updatePlaylists(reordered)
+        }
+    }
+
+    /**
      * Reorder tracks in a playlist by assigning updated position indices and persisting to DB.
      */
     fun reorderTracks(tracks: List<Track>) {

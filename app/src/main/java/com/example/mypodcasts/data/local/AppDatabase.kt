@@ -10,7 +10,7 @@ import com.example.mypodcasts.data.model.Track
 
 @Database(
     entities = [PlayList::class, Track::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

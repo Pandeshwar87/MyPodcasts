@@ -57,7 +57,7 @@ fun PlaylistDetailScreen(
     }
 
     val playlist = currentItem.playlist
-    val tracks = currentItem.tracks
+    val tracks = currentItem.sortedTracks
 
     Scaffold(
         topBar = {

@@ -26,6 +26,9 @@ class MediaRepository(
     suspend fun updatePlaylist(playlist: PlayList) =
         playlistDao.updatePlaylist(playlist)
 
+    suspend fun updatePlaylists(playlists: List<PlayList>) =
+        playlistDao.updatePlaylists(playlists)
+
     suspend fun deletePlaylist(playlist: PlayList) =
         playlistDao.deletePlaylist(playlist)
 

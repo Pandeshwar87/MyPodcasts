@@ -13,4 +13,7 @@ data class PlayListWithTracks(
         entityColumn = "playlistId"
     )
     val tracks: List<Track>
-)
+) {
+    val sortedTracks: List<Track>
+        get() = tracks.sortedWith(compareBy({ it.position }, { it.addedAt }))
+}

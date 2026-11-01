@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
@@ -25,6 +27,10 @@ fun PlayListItemCard(
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null,
+    canMoveUp: Boolean = false,
+    canMoveDown: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val playlist = playlistWithTracks.playlist
@@ -92,21 +98,58 @@ fun PlayListItemCard(
                 )
             }
 
+            // Quick Reorder Up / Down Buttons
+            if (onMoveUp != null && canMoveUp) {
+                IconButton(
+                    onClick = onMoveUp,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowUpward,
+                        contentDescription = "Move Up",
+                        tint = SecondaryViolet,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            if (onMoveDown != null && canMoveDown) {
+                IconButton(
+                    onClick = onMoveDown,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDownward,
+                        contentDescription = "Move Down",
+                        tint = SecondaryViolet,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
             // Edit Action
-            IconButton(onClick = onEditClick) {
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier.size(36.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit Playlist",
-                    tint = TextSecondary
+                    tint = TextSecondary,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
             // Delete Action
-            IconButton(onClick = onDeleteClick) {
+            IconButton(
+                onClick = onDeleteClick,
+                modifier = Modifier.size(36.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete Playlist",
-                    tint = TextSecondary
+                    tint = TextSecondary,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -114,4 +157,3 @@ fun PlayListItemCard(
 }
 
 private fun String?.isNull_or_blank(): Boolean = this == null || this.isBlank()
-
