@@ -1,3 +1,5 @@
+@file:OptIn(UnstableApi::class)
+
 package com.example.mypodcasts.player
 
 import android.app.Notification
@@ -11,6 +13,8 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaStyleNotificationHelper
 import com.example.mypodcasts.R
 import com.example.mypodcasts.ui.main.MainActivity
 
@@ -140,16 +144,22 @@ class BackgroundAudioService : Service() {
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
-            .setContentText(artist ?: "MyPodcasts Audio Player")
+            .setContentText(artist ?: "MyPodcasts Media Player")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(mainPendingIntent)
             .setOngoing(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .addAction(android.R.drawable.ic_media_rew, "-15s", rewindPendingIntent)
             .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
             .addAction(android.R.drawable.ic_media_ff, "+15s", forwardPendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
+
+        val mediaSession = playerManagerRef?.mediaSession
+        if (mediaSession != null) {
+            notificationBuilder.setStyle(MediaStyleNotificationHelper.MediaStyle(mediaSession))
+        }
 
         val notification: Notification = notificationBuilder.build()
 
@@ -168,10 +178,12 @@ class BackgroundAudioService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Background Media Playback",
-                NotificationManager.IMPORTANCE_LOW
+                "Media Playback Controls",
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Media controls notification for audio playback"
+                description = "Media controls notification for audio and video playback"
+                setShowBadge(true)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)

@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: PlaylistViewModel by viewModels()
 
-    // Permission launcher for accessing media on device
+    // Permission launcher for accessing media on device and notifications
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
@@ -141,6 +141,7 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_AUDIO)
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }

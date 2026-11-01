@@ -26,7 +26,9 @@ data class PlayerState(
 class AudioPlayerManager(private val context: Context) {
 
     private var exoPlayer: ExoPlayer? = null
-    private var mediaSession: MediaSession? = null
+    var mediaSession: MediaSession? = null
+        private set
+
     private var positionUpdateJob: Job? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
