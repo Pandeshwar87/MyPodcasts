@@ -2,18 +2,26 @@
 
 package com.example.mypodcasts.player
 
+import android.R
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
 import com.example.mypodcasts.data.model.SourceType
 import com.example.mypodcasts.data.model.Track
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -103,8 +111,65 @@ class AudioPlayerManager(private val context: Context) {
 
         exoPlayer?.let { player ->
             try {
+                val rewind15Command = SessionCommand("ACTION_REWIND_15", Bundle.EMPTY)
+                val rewind15Button = CommandButton.Builder()
+                    .setDisplayName("Rewind 15s")
+                    .setSessionCommand(rewind15Command)
+                    .setIconResId(R.drawable.ic_media_rew)
+                    .build()
+
+                val forward15Command = SessionCommand("ACTION_FORWARD_15", Bundle.EMPTY)
+                val forward15Button = CommandButton.Builder()
+                    .setDisplayName("Forward 15s")
+                    .setSessionCommand(forward15Command)
+                    .setIconResId(R.drawable.ic_media_ff)
+                    .build()
+
+                val customLayout = ImmutableList.of(rewind15Button, forward15Button)
+
                 mediaSession = MediaSession.Builder(context, player)
                     .setId("MyPodcastsMediaSession")
+                    .setCustomLayout(customLayout)
+                    .setCallback(object : MediaSession.Callback {
+                        override fun onCustomCommand(
+                            session: MediaSession,
+                            controller: MediaSession.ControllerInfo,
+                            customCommand: SessionCommand,
+                            args: Bundle
+                        ): ListenableFuture<SessionResult> {
+                            when (customCommand.customAction) {
+                                "ACTION_REWIND_15" -> rewind15Sec()
+                                "ACTION_FORWARD_15" -> forward15Sec()
+                            }
+                            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                        }
+
+                        override fun onConnect(
+                            session: MediaSession,
+                            controller: MediaSession.ControllerInfo
+                        ): MediaSession.ConnectionResult {
+                            val sessionCommands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                                .add(rewind15Command)
+                                .add(forward15Command)
+                                .build()
+
+                            // Remove Previous and Next track commands so system media notification card only shows Play/Pause and Seek/15s actions
+                            val playerCommands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
+                                .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
+                                .remove(Player.COMMAND_SEEK_TO_NEXT)
+                                .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                                .remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                                .add(Player.COMMAND_SEEK_BACK)
+                                .add(Player.COMMAND_SEEK_FORWARD)
+                                .build()
+
+                            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                                .setAvailableSessionCommands(sessionCommands)
+                                .setAvailablePlayerCommands(playerCommands)
+                                .setCustomLayout(customLayout)
+                                .build()
+                        }
+                    })
                     .build()
             } catch (e: Exception) {
                 e.printStackTrace()
