@@ -56,7 +56,23 @@ object UrlParser {
             )
         }
 
-        // 4. Check Direct Audio Extension / Stream
+        // 4. Check Google Drive
+        if (trimmed.contains("drive.google.com", ignoreCase = true) ||
+            trimmed.contains("docs.google.com", ignoreCase = true)
+        ) {
+            val fileName = try {
+                URI(trimmed).path?.substringAfterLast("/") ?: "Google Drive File"
+            } catch (_: Exception) {
+                "Google Drive File"
+            }
+            return ParsedUrlMetadata(
+                sourceType = SourceType.GOOGLE_DRIVE,
+                mediaType = MediaType.AUDIO,
+                suggestedTitle = if (fileName.isNotBlank() && fileName != "file" && fileName != "view" && fileName != "d") fileName else "Google Drive File"
+            )
+        }
+
+        // 5. Check Direct Audio Extension / Stream
         val cleanPath = try {
             URI(trimmed).path?.lowercase() ?: ""
         } catch (e: Exception) {
@@ -75,7 +91,7 @@ object UrlParser {
             )
         }
 
-        // 5. Check Direct Video Extension
+        // 6. Check Direct Video Extension
         if (cleanPath.endsWith(".mp4") || cleanPath.endsWith(".m3u8") ||
             cleanPath.endsWith(".webm") || cleanPath.endsWith(".mkv")
         ) {
@@ -87,7 +103,7 @@ object UrlParser {
             )
         }
 
-        // 6. Generic / Other Web Link
+        // 7. Generic / Other Web Link
         val domain = try {
             URI(trimmed).host ?: "Web Link"
         } catch (e: Exception) {

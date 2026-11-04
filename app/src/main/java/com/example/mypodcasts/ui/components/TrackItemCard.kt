@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
@@ -97,12 +98,14 @@ fun TrackItemCard(
                         SourceType.LOCAL_FILE -> Icons.Default.Folder
                         SourceType.YOUTUBE -> Icons.Default.Videocam
                         SourceType.SPOTIFY -> Icons.Default.Headphones
+                        SourceType.GOOGLE_DRIVE -> Icons.Default.CloudQueue
                         else -> Icons.Default.MusicNote
                     }
                     val iconTint = when (track.sourceType) {
                         SourceType.YOUTUBE -> AccentYouTubeRed
                         SourceType.SPOTIFY -> AccentSpotifyGreen
                         SourceType.LOCAL_FILE -> AccentEmerald
+                        SourceType.GOOGLE_DRIVE -> Color(0xFF4285F4)
                         else -> PrimaryViolet
                     }
                     Icon(
@@ -238,6 +241,7 @@ fun SourceBadge(sourceType: SourceType) {
         SourceType.LOCAL_FILE -> Triple("Local MP3", AccentEmerald.copy(alpha = 0.2f), AccentEmerald)
         SourceType.YOUTUBE -> Triple("YouTube", AccentYouTubeRed.copy(alpha = 0.2f), AccentYouTubeRed)
         SourceType.SPOTIFY -> Triple("Spotify", AccentSpotifyGreen.copy(alpha = 0.2f), AccentSpotifyGreen)
+        SourceType.GOOGLE_DRIVE -> Triple("Google Drive", Color(0xFF4285F4).copy(alpha = 0.2f), Color(0xFF4285F4))
         SourceType.DIRECT_AUDIO -> Triple("Audio Stream", PrimaryViolet.copy(alpha = 0.2f), PrimaryViolet)
         SourceType.DIRECT_VIDEO -> Triple("Video Stream", AccentPink.copy(alpha = 0.2f), AccentPink)
         SourceType.OTHER -> Triple("Web Link", Color.Gray.copy(alpha = 0.2f), Color.LightGray)

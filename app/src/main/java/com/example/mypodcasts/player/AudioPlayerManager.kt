@@ -265,7 +265,7 @@ class AudioPlayerManager(private val context: Context) {
                     )
                 }
             }
-            SourceType.YOUTUBE, SourceType.SPOTIFY, SourceType.OTHER -> {
+            SourceType.YOUTUBE, SourceType.SPOTIFY, SourceType.GOOGLE_DRIVE, SourceType.OTHER -> {
                 launchExternalMedia(track.mediaUrl)
                 _playerState.value = PlayerState(
                     currentTrack = track,

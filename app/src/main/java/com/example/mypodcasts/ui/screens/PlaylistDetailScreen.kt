@@ -1,5 +1,7 @@
 package com.example.mypodcasts.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.mypodcasts.data.model.SourceType
@@ -37,6 +40,7 @@ fun PlaylistDetailScreen(
     onOpenWebView: (url: String, title: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val playlistsWithTracks by viewModel.playlistsWithTracks.collectAsState()
     val currentItem = remember(playlistsWithTracks, playlistId) {
         playlistsWithTracks.find { it.playlist.id == playlistId }
@@ -204,13 +208,28 @@ fun PlaylistDetailScreen(
                         TrackItemCard(
                             track = track,
                             onPlayClick = {
-                                if (track.sourceType == SourceType.LOCAL_FILE ||
-                                    track.sourceType == SourceType.DIRECT_AUDIO ||
-                                    track.sourceType == SourceType.SPOTIFY
-                                ) {
-                                    viewModel.playTrack(track)
-                                } else {
-                                    onOpenWebView(track.mediaUrl, track.title)
+                                when (track.sourceType) {
+                                    SourceType.LOCAL_FILE, SourceType.DIRECT_AUDIO -> {
+                                        viewModel.playTrack(track)
+                                    }
+                                    SourceType.SPOTIFY -> {
+                                        viewModel.playTrack(track)
+                                    }
+                                    SourceType.GOOGLE_DRIVE -> {
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(track.mediaUrl)).apply {
+                                                setPackage("com.google.android.apps.docs")
+                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            }
+                                            context.startActivity(intent)
+                                        } catch (_: Exception) {
+                                            // Fallback if Google Drive app is not installed
+                                            onOpenWebView(track.mediaUrl, track.title)
+                                        }
+                                    }
+                                    else -> {
+                                        onOpenWebView(track.mediaUrl, track.title)
+                                    }
                                 }
                             },
                             onEditClick = { editingTrack = track },
